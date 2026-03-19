@@ -8,14 +8,18 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    :root{
-      --panel: rgba(17,24,39,.72);
-      --panelBorder: rgba(255,255,255,.08);
-      --ok: rgba(34,197,94,.28);
-      --okBorder: rgba(74,222,128,.35);
-      --bad: rgba(239,68,68,.28);
-      --badBorder: rgba(248,113,113,.35);
-    }
+:root{
+  --panel: rgba(255,255,255,.82);
+  --panelBorder: rgba(37,99,235,.14);
+  --ok: rgba(34,197,94,.18);
+  --okBorder: rgba(34,197,94,.38);
+  --bad: rgba(239,68,68,.18);
+  --badBorder: rgba(239,68,68,.38);
+  --textMain: #0f172a;
+  --textSoft: rgba(15,23,42,.72);
+  --cardBg: rgba(255,255,255,.92);
+  --cardBorder: rgba(37,99,235,.12);
+}
 
     html, body {
       height: 100%;
@@ -25,32 +29,32 @@
     .glass-card{
       background: var(--panel);
       border: 1px solid var(--panelBorder);
-      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+      box-shadow: 0 10px 30px rgba(15,23,42,.10);
       backdrop-filter: blur(10px);
     }
 
     .pill {
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.78);
+      border: 1px solid rgba(37,99,235,.16);
+      background: rgba(255,255,255,.85);
+      color: var(--textSoft);
     }
 
-    .pill-ok {
-      border: 1px solid rgba(74,222,128,.35);
-      background: rgba(34,197,94,.18);
-      color: rgba(255,255,255,.92);
-    }
+.pill-ok {
+  border: 1px solid rgba(34,197,94,.32);
+  background: rgba(34,197,94,.14);
+  color: var(--textMain);
+}
 
-    .pill-bad {
-      border: 1px solid rgba(248,113,113,.35);
-      background: rgba(239,68,68,.18);
-      color: rgba(255,255,255,.92);
-    }
+.pill-bad {
+  border: 1px solid rgba(239,68,68,.32);
+  background: rgba(239,68,68,.14);
+  color: var(--textMain);
+}
 
     .mono { font-variant-numeric: tabular-nums; }
 
     .table-row + .table-row {
-      border-top: 1px solid rgba(255,255,255,.08);
+      border-top: 1px solid rgba(37,99,235,.10);
     }
 
     .compact-shell {
@@ -103,41 +107,52 @@
     }
 
     .tight-label {
-      font-size: 9px;
+      font-size: 10px;
       line-height: 1;
       text-transform: uppercase;
       letter-spacing: .08em;
-      color: rgba(255,255,255,.70);
+      color: var(--textSoft);
     }
 
     .tight-value {
       margin-top: 4px;
-      font-size: 14px;
+      font-size: 16px;
       line-height: 1.1;
       font-weight: 800;
+      color: var(--textMain);
     }
 
     .row-open {
       background: var(--ok);
-      color: #f0fdf4;
+      color: var(--textMain);
       box-shadow:
         inset 0 0 0 1px var(--okBorder),
-        inset 0 0 18px rgba(74,222,128,.12),
-        0 0 16px rgba(34,197,94,.10);
+        inset 0 0 18px rgba(59,130,246,.08),
+        0 0 16px rgba(59,130,246,.08);
     }
 
     .row-hold {
       background: var(--bad);
-      color: #fff1f2;
+      color: var(--textMain);
       box-shadow:
         inset 0 0 0 1px var(--badBorder),
-        inset 0 0 18px rgba(248,113,113,.10),
-        0 0 16px rgba(239,68,68,.10);
+        inset 0 0 18px rgba(250,204,21,.10),
+        0 0 16px rgba(250,204,21,.08);
+    }
+
+    .title-text {
+      font-size: 28px;
+      line-height: 1.1;
+      font-weight: 900;
+      letter-spacing: .02em;
+      color: #1d4ed8;
+      text-align: center;
+      margin-bottom: 8px;
     }
 
     ::-webkit-scrollbar { height: 10px; width: 10px; }
-    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 999px; }
-    ::-webkit-scrollbar-track { background: rgba(255,255,255,.04); }
+    ::-webkit-scrollbar-thumb { background: rgba(37,99,235,.18); border-radius: 999px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,.35); }
 
     @media (max-width: 1200px) {
       html, body { overflow: auto; }
@@ -161,91 +176,97 @@
       theme: {
         extend: {
           fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-          colors: { 'sim-yellow': '#facc15' }
+          colors: { 'sim-yellow': '#eab308', 'sim-blue': '#2563eb' }
         }
       }
     }
   </script>
 </head>
 
-<body class="font-sans bg-gray-950 text-gray-100">
-  <div class="relative overflow-hidden bg-gray-950 text-gray-100 p-2 sm:p-3 compact-shell">
+<body class="font-sans bg-white text-slate-900">
+  <div class="relative overflow-hidden bg-white text-slate-900 p-2 sm:p-3 compact-shell">
     <div class="pointer-events-none absolute inset-0">
       <div
-        class="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] rounded-full blur-3xl opacity-20"
-        style="background: radial-gradient(circle, rgba(250,204,21,0.30), rgba(30,64,175,0.16), transparent 70%);">
+        class="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] rounded-full blur-3xl opacity-30"
+        style="background: radial-gradient(circle, rgba(250,204,21,0.24), rgba(37,99,235,0.14), transparent 70%);">
       </div>
       <div
-        class="absolute -bottom-56 right-[-120px] w-[900px] h-[900px] rounded-full blur-3xl opacity-15"
-        style="background: radial-gradient(circle, rgba(30,64,175,0.22), transparent 65%);">
+        class="absolute -bottom-56 right-[-120px] w-[900px] h-[900px] rounded-full blur-3xl opacity-20"
+        style="background: radial-gradient(circle, rgba(37,99,235,0.16), transparent 65%);">
       </div>
     </div>
 
     <main class="compact-main">
       <section class="glass-card rounded-2xl p-2 sm:p-3">
+        <div class="title-text">Flight Line Status</div>
+
         <div id="todayLine"
-             class="text-[10px] sm:text-xs mono mb-2"
-             style="color: rgba(255,255,255,.70);">
+             class="text-xs sm:text-sm mono mb-2"
+             style="color: var(--textSoft);">
           —
         </div>
 
         <div class="weather-grid-compact">
-          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+          <div class="rounded-xl tight-card" style="background: var(--cardBg); border: 1px solid var(--cardBorder);">
             <div class="tight-label">Airport</div>
-            <div id="airportCode" class="tight-value text-sim-yellow">KORL</div>
+            <div id="airportCode" class="tight-value text-sim-blue">KORL</div>
           </div>
 
-          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+          <div class="rounded-xl tight-card" style="background: var(--cardBg); border: 1px solid var(--cardBorder);">
             <div class="tight-label">Best Runway</div>
             <div id="bestRunway" class="tight-value">—</div>
           </div>
 
-          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+          <div class="rounded-xl tight-card" style="background: var(--cardBg); border: 1px solid var(--cardBorder);">
             <div class="tight-label">Wind</div>
             <div id="windSummary" class="tight-value">—</div>
           </div>
 
-          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+          <div class="rounded-xl tight-card" style="background: var(--cardBg); border: 1px solid var(--cardBorder);">
             <div class="tight-label">Visibility</div>
             <div id="visibility" class="tight-value">—</div>
           </div>
 
-          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+          <div class="rounded-xl tight-card" style="background: var(--cardBg); border: 1px solid var(--cardBorder);">
             <div class="tight-label">Ceiling</div>
             <div id="ceiling" class="tight-value">—</div>
           </div>
 
-          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+          <div class="rounded-xl tight-card" style="background: var(--cardBg); border: 1px solid var(--cardBorder);">
             <div class="tight-label">Crosswind</div>
             <div id="crosswind" class="tight-value">—</div>
           </div>
         </div>
 
-        <div class="mt-2 flex flex-wrap gap-1.5">
-          <span id="tafPill" class="pill text-[10px] px-2 py-0.5 rounded-full">TAF status</span>
-          <span id="sigmetPill" class="pill text-[10px] px-2 py-0.5 rounded-full">SIGMET status</span>
-          <span id="updatedPill" class="pill text-[10px] px-2 py-0.5 rounded-full mono">Updated —</span>
-        </div>
+
 
         <div class="mt-2 rounded-xl px-3 py-2"
-          style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+          style="background: var(--cardBg); border: 1px solid var(--cardBorder);">
           <div class="tight-label">METAR</div>
-          <div id="rawMetar" class="mt-1 text-xs font-semibold break-words leading-snug">Loading...</div>
+          <div id="rawMetar" class="mt-1 text-sm font-semibold break-words leading-snug text-slate-900">Loading...</div>
         </div>
+
+                <div class="mt-2 flex flex-wrap gap-1.5">
+          <span id="tafPill" class="pill text-xs px-2 py-0.5 rounded-full">TAF status</span>
+          <span id="sigmetPill" class="pill text-xs px-2 py-0.5 rounded-full">SIGMET status</span>
+          <span id="updatedPill" class="pill text-xs px-2 py-0.5 rounded-full mono">Updated —</span>
+        </div>
+        
       </section>
+
 
       <section class="glass-card rounded-2xl p-2 sm:p-3 table-fit">
         <div class="table-fit-inner min-w-[760px]">
           <div class="grid grid-cols-3 gap-0 rounded-t-xl overflow-hidden table-head"
-               style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
-            <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider">Flight Profile</div>
-            <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider">Conditions</div>
-            <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider">Status</div>
+               style="background: rgba(37,99,235,.06); border: 1px solid rgba(37,99,235,.12);">
+            <div class="px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-slate-900">Flight Profile</div>
+            <div class="px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-slate-900">Conditions</div>
+            <div class="px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-slate-900">Status</div>
           </div>
 
           <div id="statusTable"
                class="rounded-b-xl overflow-hidden"
-               style="border: 1px solid rgba(255,255,255,.10); border-top: 0;">
+               style="border: 1px solid rgba(37,99,235,.12); border-top: 0;">
           </div>
         </div>
       </section>
@@ -500,9 +521,9 @@ function renderRow(profile, condition, isOpen) {
 
   return `
     <div class="table-row grid grid-cols-3 ${rowClass}">
-      <div class="px-3 py-2 text-xs font-extrabold">${profile}</div>
-      <div class="px-3 py-2 text-xs font-semibold">${condition}</div>
-      <div class="px-3 py-2 text-xs font-extrabold uppercase tracking-wide">${statusText}</div>
+      <div class="px-3 py-2 text-sm font-extrabold">${profile}</div>
+      <div class="px-3 py-2 text-sm font-semibold">${condition}</div>
+      <div class="px-3 py-2 text-sm font-extrabold uppercase tracking-wide">${statusText}</div>
     </div>
   `;
 }
@@ -522,11 +543,9 @@ function renderTable(statuses) {
     renderRow("RENTER", "PRACTICE AREA", statuses.renter.practiceArea),
     renderRow("RENTER", "CROSS COUNTRY", statuses.renter.crossCountry),
 
-
     renderRow("TIME BUILD", "TRAFFIC PATTERN", statuses.timeBuild.trafficPattern),
     renderRow("TIME BUILD", "PRACTICE AREA", statuses.timeBuild.practiceArea),
     renderRow("TIME BUILD", "CROSS COUNTRY", statuses.timeBuild.crossCountry),
-
   ];
 
   document.getElementById("statusTable").innerHTML = rows.join("");
@@ -770,16 +789,16 @@ function render() {
     ? `Gusts on ${WEATHER.tafAirport} TAF within next hour`
     : `No gusts on ${WEATHER.tafAirport} TAF within next hour`;
   tafPill.className = WEATHER.tafHasGustsNextHour
-    ? "pill-bad text-[10px] px-2 py-0.5 rounded-full"
-    : "pill-ok text-[10px] px-2 py-0.5 rounded-full";
+    ? "pill-bad text-xs px-2 py-0.5 rounded-full"
+    : "pill-ok text-xs px-2 py-0.5 rounded-full";
 
   const sigmetPill = document.getElementById("sigmetPill");
   sigmetPill.textContent = WEATHER.convectiveSigmetActive
     ? `SIGMET affecting ${WEATHER.airport}`
     : `No SIGMET affecting ${WEATHER.airport}`;
   sigmetPill.className = WEATHER.convectiveSigmetActive
-    ? "pill-bad text-[10px] px-2 py-0.5 rounded-full"
-    : "pill-ok text-[10px] px-2 py-0.5 rounded-full";
+    ? "pill-bad text-xs px-2 py-0.5 rounded-full"
+    : "pill-ok text-xs px-2 py-0.5 rounded-full";
 
   document.getElementById("updatedPill").textContent = `Updated ${formatLocalTime(WEATHER.receiptTime)}`;
 
