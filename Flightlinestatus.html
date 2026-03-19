@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flight Line Status</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root{
+      --panel: rgba(17,24,39,.72);
+      --panelBorder: rgba(255,255,255,.08);
+      --ok: rgba(52,211,153,.18);
+      --okBorder: rgba(52,211,153,.35);
+      --bad: rgba(239,68,68,.18);
+      --badBorder: rgba(239,68,68,.35);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .glass-card{
+      background: var(--panel);
+      border: 1px solid var(--panelBorder);
+      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+      backdrop-filter: blur(10px);
+    }
+
+    .pill {
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.78);
+    }
+
+    .pill-ok {
+      border: 1px solid var(--okBorder);
+      background: var(--ok);
+      color: rgba(255,255,255,.92);
+    }
+
+    .pill-bad {
+      border: 1px solid var(--badBorder);
+      background: var(--bad);
+      color: rgba(255,255,255,.92);
+    }
+
+    .mono { font-variant-numeric: tabular-nums; }
+
+    .status-open {
+      background: rgba(52,211,153,.20);
+      border: 1px solid rgba(52,211,153,.35);
+      color: #a7f3d0;
+    }
+
+    .status-hold {
+      background: rgba(239,68,68,.18);
+      border: 1px solid rgba(239,68,68,.35);
+      color: #fecaca;
+    }
+
+    .table-row + .table-row {
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .compact-shell {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .compact-main {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 8px;
+    }
+
+    .weather-grid-compact {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .table-fit {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .table-fit-inner {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .table-row {
+      min-height: 32px;
+      align-items: center;
+    }
+
+    .table-head {
+      min-height: 34px;
+      align-items: center;
+    }
+
+    .status-pill-compact {
+      min-width: 70px;
+      padding: 2px 8px;
+      font-size: 11px;
+      line-height: 1;
+    }
+
+    .tight-card {
+      padding: 8px 10px;
+    }
+
+    .tight-label {
+      font-size: 9px;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: rgba(255,255,255,.70);
+    }
+
+    .tight-value {
+      margin-top: 4px;
+      font-size: 14px;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    ::-webkit-scrollbar { height: 10px; width: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 999px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,.04); }
+
+    @media (max-width: 1200px) {
+      html, body { overflow: auto; }
+      .weather-grid-compact {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .compact-shell {
+        height: auto;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .weather-grid-compact {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: { 'sim-yellow': '#facc15' }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body class="font-sans bg-gray-950 text-gray-100">
+  <div class="relative overflow-hidden bg-gray-950 text-gray-100 p-2 sm:p-3 compact-shell">
+    <div class="pointer-events-none absolute inset-0">
+      <div
+        class="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] rounded-full blur-3xl opacity-20"
+        style="background: radial-gradient(circle, rgba(250,204,21,0.30), rgba(30,64,175,0.16), transparent 70%);">
+      </div>
+      <div
+        class="absolute -bottom-56 right-[-120px] w-[900px] h-[900px] rounded-full blur-3xl opacity-15"
+        style="background: radial-gradient(circle, rgba(30,64,175,0.22), transparent 65%);">
+      </div>
+    </div>
+
+    <main class="compact-main">
+      <section class="glass-card rounded-2xl p-2 sm:p-3">
+        <div id="todayLine"
+             class="text-[10px] sm:text-xs mono mb-2"
+             style="color: rgba(255,255,255,.70);">
+          —
+        </div>
+
+        <div class="weather-grid-compact">
+          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+            <div class="tight-label">Airport</div>
+            <div id="airportCode" class="tight-value text-sim-yellow">KORL</div>
+          </div>
+
+          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+            <div class="tight-label">Best Runway</div>
+            <div id="bestRunway" class="tight-value">—</div>
+          </div>
+
+          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+            <div class="tight-label">Wind</div>
+            <div id="windSummary" class="tight-value">—</div>
+          </div>
+
+          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+            <div class="tight-label">Visibility</div>
+            <div id="visibility" class="tight-value">—</div>
+          </div>
+
+          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+            <div class="tight-label">Ceiling</div>
+            <div id="ceiling" class="tight-value">—</div>
+          </div>
+
+          <div class="rounded-xl tight-card" style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+            <div class="tight-label">Crosswind</div>
+            <div id="crosswind" class="tight-value">—</div>
+          </div>
+        </div>
+
+        <div class="mt-2 flex flex-wrap gap-1.5">
+          <span id="tafPill" class="pill text-[10px] px-2 py-0.5 rounded-full">TAF status</span>
+          <span id="sigmetPill" class="pill text-[10px] px-2 py-0.5 rounded-full">SIGMET status</span>
+          <span id="updatedPill" class="pill text-[10px] px-2 py-0.5 rounded-full mono">Updated —</span>
+        </div>
+
+        <div class="mt-2 rounded-xl px-3 py-2"
+          style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+          <div class="tight-label">METAR</div>
+          <div id="rawMetar" class="mt-1 text-xs font-semibold break-words leading-snug">Loading...</div>
+        </div>
+      </section>
+
+      <section class="glass-card rounded-2xl p-2 sm:p-3 table-fit">
+        <div class="table-fit-inner min-w-[760px]">
+          <div class="grid grid-cols-3 gap-0 rounded-t-xl overflow-hidden table-head"
+               style="background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.10);">
+            <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider">Flight Profile</div>
+            <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider">Conditions</div>
+            <div class="px-3 py-2 text-[10px] font-extrabold uppercase tracking-wider">Status</div>
+          </div>
+
+          <div id="statusTable"
+               class="rounded-b-xl overflow-hidden"
+               style="border: 1px solid rgba(255,255,255,.10); border-top: 0;">
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+const CONFIG = {
+  airport: "KORL",
+  tafAirport: "KMCO",
+  refreshMs: 5 * 60 * 1000,
+  airportLat: 28.5455,
+  airportLon: -81.3329,
+
+  // Replace this with your deployed proxy URL
+  proxyBase: "proxyBase: "https://purple-sun-777e.bocajack03.workers.dev"
+};
+
+const RUNWAYS = {
+  "07": 67,
+  "25": 247,
+  "13": 131,
+  "31": 311
+};
+
+const WEATHER = {
+  airport: CONFIG.airport,
+  tafAirport: CONFIG.tafAirport,
+  rawMetar: "Loading...",
+  receiptTime: new Date().toISOString(),
+  windDirection: 0,
+  windSpeed: 0,
+  windGust: 0,
+  visibility: 99,
+  clouds: [],
+  tafHasGustsNextHour: false,
+  convectiveSigmetActive: false,
+  sigmetMatches: []
+};
+
+const weekdays = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const pad2 = (n) => String(n).padStart(2, "0");
+
+function toYMD(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function getFormattedHeaderDate() {
+  const now = new Date();
+  return `${weekdays[now.getDay()]} • ${toYMD(now)}`;
+}
+
+function formatLocalTime(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function safeNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function makeStatuses() {
+  return {
+    dual: { trafficPattern: true, practiceArea: true, crossCountry: true, ifr: true },
+    solo: { trafficPattern: true, practiceArea: true, crossCountry: true },
+    renter: { trafficPattern: true, practiceArea: true, crossCountry: true, ifr: true },
+    timeBuild: { trafficPattern: true, practiceArea: true, crossCountry: true, ifr: true }
+  };
+}
+
+function calculateRunwayWindComponents(windDirection, windSpeed) {
+  let bestRunway = "--";
+  let bestHeadwind = -Infinity;
+  let bestCrosswind = 0;
+
+  for (const [runway, heading] of Object.entries(RUNWAYS)) {
+    let angle = Math.abs(windDirection - heading);
+    if (angle > 180) angle = 360 - angle;
+
+    const headwind = windSpeed * Math.cos((angle * Math.PI) / 180);
+    const crosswind = Math.abs(windSpeed * Math.sin((angle * Math.PI) / 180));
+
+    if (headwind > bestHeadwind) {
+      bestHeadwind = headwind;
+      bestCrosswind = crosswind;
+      bestRunway = runway;
+    }
+  }
+
+  return {
+    bestRunway,
+    headwind: Math.round(bestHeadwind * 10) / 10,
+    crosswind: Math.round(bestCrosswind * 10) / 10
+  };
+}
+
+function getLowestCeiling(clouds) {
+  let lowest = Infinity;
+  for (const layer of clouds || []) {
+    const cover = (layer.cover || "").toUpperCase();
+    const base = Number(layer.base);
+    if ((cover === "BKN" || cover === "OVC") && Number.isFinite(base) && base < lowest) {
+      lowest = base;
+    }
+  }
+  return Number.isFinite(lowest) ? lowest : null;
+}
+
+function setAllNoGo(statuses) {
+  statuses.dual.trafficPattern = false;
+  statuses.dual.practiceArea = false;
+  statuses.dual.crossCountry = false;
+  statuses.dual.ifr = false;
+
+  statuses.solo.trafficPattern = false;
+  statuses.solo.practiceArea = false;
+  statuses.solo.crossCountry = false;
+
+  statuses.renter.trafficPattern = false;
+  statuses.renter.practiceArea = false;
+  statuses.renter.crossCountry = false;
+  statuses.renter.ifr = false;
+
+  statuses.timeBuild.trafficPattern = false;
+  statuses.timeBuild.practiceArea = false;
+  statuses.timeBuild.crossCountry = false;
+  statuses.timeBuild.ifr = false;
+}
+
+function applyFlightRules(weather) {
+  const statuses = makeStatuses();
+
+  const windDirection = weather.windDirection ?? 0;
+  const windSpeed = weather.windSpeed ?? 0;
+  const windGust = weather.windGust ?? windSpeed;
+  const visibility = Number(weather.visibility ?? 99);
+  const lowestCeiling = getLowestCeiling(weather.clouds);
+  const windCalc = calculateRunwayWindComponents(windDirection, windSpeed);
+
+  if (windGust >= 30) setAllNoGo(statuses);
+
+  if (windGust > windSpeed) {
+    statuses.solo.trafficPattern = false;
+    statuses.solo.practiceArea = false;
+    statuses.solo.crossCountry = false;
+  }
+
+  if (weather.tafHasGustsNextHour) {
+    statuses.solo.trafficPattern = false;
+    statuses.solo.practiceArea = false;
+    statuses.solo.crossCountry = false;
+  }
+
+  if (windSpeed > 25 || windGust > 25) {
+    statuses.dual.trafficPattern = false;
+    statuses.dual.practiceArea = false;
+    statuses.dual.crossCountry = false;
+    statuses.dual.ifr = false;
+
+    statuses.renter.trafficPattern = false;
+    statuses.renter.practiceArea = false;
+    statuses.renter.crossCountry = false;
+    statuses.renter.ifr = false;
+
+    statuses.timeBuild.trafficPattern = false;
+    statuses.timeBuild.practiceArea = false;
+    statuses.timeBuild.crossCountry = false;
+    statuses.timeBuild.ifr = false;
+  }
+
+  if (windSpeed > 20 || windGust > 20) {
+    statuses.solo.trafficPattern = false;
+    statuses.solo.practiceArea = false;
+    statuses.solo.crossCountry = false;
+  }
+
+  if (windCalc.crosswind > 15) {
+    statuses.dual.trafficPattern = false;
+    statuses.dual.practiceArea = false;
+    statuses.dual.crossCountry = false;
+    statuses.dual.ifr = false;
+
+    statuses.renter.trafficPattern = false;
+    statuses.renter.practiceArea = false;
+    statuses.renter.crossCountry = false;
+    statuses.renter.ifr = false;
+
+    statuses.timeBuild.trafficPattern = false;
+    statuses.timeBuild.practiceArea = false;
+    statuses.timeBuild.crossCountry = false;
+    statuses.timeBuild.ifr = false;
+  }
+
+  if (windCalc.crosswind > 10) {
+    statuses.solo.trafficPattern = false;
+    statuses.solo.practiceArea = false;
+    statuses.solo.crossCountry = false;
+  }
+
+  if (visibility < 1) statuses.dual.ifr = false;
+
+  if (visibility < 3) {
+    statuses.dual.trafficPattern = false;
+    statuses.solo.trafficPattern = false;
+    statuses.renter.trafficPattern = false;
+    statuses.timeBuild.trafficPattern = false;
+  }
+
+  if (visibility < 5) {
+    statuses.dual.practiceArea = false;
+    statuses.solo.practiceArea = false;
+    statuses.renter.practiceArea = false;
+    statuses.timeBuild.practiceArea = false;
+  }
+
+  if (visibility < 6) {
+    statuses.dual.crossCountry = false;
+    statuses.solo.crossCountry = false;
+    statuses.renter.crossCountry = false;
+    statuses.timeBuild.crossCountry = false;
+  }
+
+  if (lowestCeiling !== null) {
+    if (lowestCeiling < 1600) {
+      statuses.dual.trafficPattern = false;
+      statuses.solo.trafficPattern = false;
+      statuses.renter.trafficPattern = false;
+      statuses.timeBuild.trafficPattern = false;
+    }
+
+    if (lowestCeiling < 2000) {
+      statuses.dual.practiceArea = false;
+      statuses.solo.practiceArea = false;
+      statuses.renter.practiceArea = false;
+      statuses.timeBuild.practiceArea = false;
+      statuses.dual.crossCountry = false;
+      statuses.timeBuild.crossCountry = false;
+    }
+
+    if (lowestCeiling < 3000) statuses.renter.crossCountry = false;
+    if (lowestCeiling < 4000) statuses.solo.crossCountry = false;
+    if (lowestCeiling < 467) statuses.dual.ifr = false;
+  }
+
+  if (weather.convectiveSigmetActive) setAllNoGo(statuses);
+
+  return { statuses, windCalc, lowestCeiling };
+}
+
+function statusPillHtml(isOpen) {
+  return `
+    <span class="${isOpen ? "status-open" : "status-hold"} status-pill-compact inline-flex items-center justify-center rounded-full font-extrabold uppercase tracking-wide">
+      ${isOpen ? "OPEN" : "HOLD"}
+    </span>
+  `;
+}
+
+function renderRow(profile, condition, isOpen) {
+  return `
+    <div class="table-row grid grid-cols-3">
+      <div class="px-3 py-1.5 text-xs font-extrabold">${profile}</div>
+      <div class="px-3 py-1.5 text-xs font-semibold" style="color: rgba(255,255,255,.82);">${condition}</div>
+      <div class="px-3 py-1.5">${statusPillHtml(isOpen)}</div>
+    </div>
+  `;
+}
+
+function renderTable(statuses) {
+  const rows = [
+    renderRow("DUAL", "TRAFFIC PATTERN", statuses.dual.trafficPattern),
+    renderRow("DUAL", "PRACTICE AREA", statuses.dual.practiceArea),
+    renderRow("DUAL", "CROSS COUNTRY", statuses.dual.crossCountry),
+    renderRow("DUAL", "IFR", statuses.dual.ifr),
+
+    renderRow("SOLO", "TRAFFIC PATTERN", statuses.solo.trafficPattern),
+    renderRow("SOLO", "PRACTICE AREA", statuses.solo.practiceArea),
+    renderRow("SOLO", "CROSS COUNTRY", statuses.solo.crossCountry),
+
+    renderRow("RENTER", "TRAFFIC PATTERN", statuses.renter.trafficPattern),
+    renderRow("RENTER", "PRACTICE AREA", statuses.renter.practiceArea),
+    renderRow("RENTER", "CROSS COUNTRY", statuses.renter.crossCountry),
+    renderRow("RENTER", "IFR", statuses.renter.ifr),
+
+    renderRow("TIME BUILD", "TRAFFIC PATTERN", statuses.timeBuild.trafficPattern),
+    renderRow("TIME BUILD", "PRACTICE AREA", statuses.timeBuild.practiceArea),
+    renderRow("TIME BUILD", "CROSS COUNTRY", statuses.timeBuild.crossCountry),
+    renderRow("TIME BUILD", "IFR", statuses.timeBuild.ifr)
+  ];
+
+  document.getElementById("statusTable").innerHTML = rows.join("");
+}
+
+function pickFirstRecord(json) {
+  if (Array.isArray(json)) return json[0] || null;
+  if (json && Array.isArray(json.data)) return json.data[0] || null;
+  return json || null;
+}
+
+function normalizeClouds(metar) {
+  const rawClouds = metar?.clouds || [];
+  if (!Array.isArray(rawClouds)) return [];
+
+  return rawClouds.map(layer => ({
+    cover: layer.cover || layer.type || "",
+    base: safeNumber(layer.base ?? layer.altitude ?? layer.height, NaN)
+  }));
+}
+
+function getMetarWindDirection(metar) {
+  const raw = metar?.wdir ?? metar?.windDirection ?? metar?.wind_dir_degrees ?? 0;
+  if (raw === "VRB") return 0;
+  return safeNumber(raw, 0);
+}
+
+function getMetarWindSpeed(metar) {
+  return safeNumber(metar?.wspd ?? metar?.windSpeed ?? metar?.wind_speed_kt, 0);
+}
+
+function getMetarWindGust(metar) {
+  const speed = getMetarWindSpeed(metar);
+  return safeNumber(metar?.wgst ?? metar?.windGust ?? metar?.wind_gust_kt, speed);
+}
+
+function getMetarVisibility(metar) {
+  return safeNumber(metar?.visib ?? metar?.visibility ?? metar?.visibility_statute_mi, 99);
+}
+
+function getRawMetar(metar) {
+  return metar?.rawOb || metar?.raw_text || metar?.raw || "No METAR available";
+}
+
+function getReceiptTime(metar) {
+  return metar?.receiptTime || metar?.obsTime || metar?.observationTime || new Date().toISOString();
+}
+
+function tafHasGustsNextHour(taf) {
+  if (!taf) return false;
+
+  const periods = [];
+  if (Array.isArray(taf.fcsts)) periods.push(...taf.fcsts);
+  if (Array.isArray(taf.forecast)) periods.push(...taf.forecast);
+
+  const now = Date.now();
+  const oneHourFromNow = now + 60 * 60 * 1000;
+
+  for (const item of periods) {
+    const from = item.fcst_time_from || item.startTime || item.valid_from || item.from;
+    const to = item.fcst_time_to || item.endTime || item.valid_to || item.to;
+    const start = from ? new Date(from).getTime() : NaN;
+    const end = to ? new Date(to).getTime() : NaN;
+    const gust = safeNumber(item.wgst ?? item.wind_gust_kt ?? item.windGust, 0);
+
+    if (Number.isFinite(start) && Number.isFinite(end) && end > now && start < oneHourFromNow && gust > 0) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function pointInRing(point, ring) {
+  const [x, y] = point;
+  let inside = false;
+
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0], yi = ring[i][1];
+    const xj = ring[j][0], yj = ring[j][1];
+
+    const intersect =
+      ((yi > y) !== (yj > y)) &&
+      (x < ((xj - xi) * (y - yi)) / ((yj - yi) || 1e-12) + xi);
+
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+}
+
+function pointInPolygon(point, polygonCoords) {
+  if (!polygonCoords?.length) return false;
+  if (!pointInRing(point, polygonCoords[0])) return false;
+
+  for (let i = 1; i < polygonCoords.length; i++) {
+    if (pointInRing(point, polygonCoords[i])) return false;
+  }
+
+  return true;
+}
+
+function pointInGeometry(point, geometry) {
+  if (!geometry) return false;
+
+  if (geometry.type === "Polygon") {
+    return pointInPolygon(point, geometry.coordinates);
+  }
+
+  if (geometry.type === "MultiPolygon") {
+    return geometry.coordinates.some(poly => pointInPolygon(point, poly));
+  }
+
+  return false;
+}
+
+function parseTime(value) {
+  if (!value) return NaN;
+  const t = new Date(value).getTime();
+  return Number.isFinite(t) ? t : NaN;
+}
+
+function sigmetIsActive(feature) {
+  const p = feature?.properties || {};
+  const now = Date.now();
+
+  const start =
+    parseTime(p.validTimeFrom) ||
+    parseTime(p.valid_from) ||
+    parseTime(p.startTime) ||
+    parseTime(p.issuetime) ||
+    NaN;
+
+  const end =
+    parseTime(p.validTimeTo) ||
+    parseTime(p.valid_to) ||
+    parseTime(p.endTime) ||
+    parseTime(p.expireTime) ||
+    NaN;
+
+  if (Number.isFinite(start) && now < start) return false;
+  if (Number.isFinite(end) && now > end) return false;
+
+  return true;
+}
+
+function getSigmetLabel(feature) {
+  const p = feature?.properties || {};
+  return p.rawAirSigmet || p.rawSigmet || p.raw_text || p.hazard || p.sequence || "SIGMET";
+}
+
+async function fetchJson(url) {
+  const res = await fetch(url, {
+    headers: { "Accept": "application/json" },
+    cache: "no-store"
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} loading ${url}`);
+  }
+
+  return res.json();
+}
+
+async function fetchViaProxy(pathAndQuery) {
+  const url = `${CONFIG.proxyBase}${pathAndQuery}`;
+  return fetchJson(url);
+}
+
+function sigmetHitsAirport(geojson) {
+  const features = Array.isArray(geojson?.features) ? geojson.features : [];
+  const airportPoint = [CONFIG.airportLon, CONFIG.airportLat];
+
+  const matches = features.filter(feature => {
+    if (!sigmetIsActive(feature)) return false;
+    return pointInGeometry(airportPoint, feature.geometry);
+  });
+
+  return {
+    active: matches.length > 0,
+    matches: matches.map(getSigmetLabel)
+  };
+}
+
+async function loadWeather() {
+  const [metarJson, tafJson, sigmetGeoJson] = await Promise.all([
+    fetchViaProxy(`/api/data/metar?ids=${encodeURIComponent(CONFIG.airport)}&format=json`),
+    fetchViaProxy(`/api/data/taf?ids=${encodeURIComponent(CONFIG.tafAirport)}&format=json`),
+    fetchViaProxy(`/api/data/airsigmet?format=geojson`)
+  ]);
+
+  const metar = pickFirstRecord(metarJson);
+  const taf = pickFirstRecord(tafJson);
+
+  if (!metar) {
+    throw new Error(`No METAR returned for ${CONFIG.airport}`);
+  }
+
+  const sigmetResult = sigmetHitsAirport(sigmetGeoJson);
+
+  WEATHER.airport = CONFIG.airport;
+  WEATHER.tafAirport = CONFIG.tafAirport;
+  WEATHER.rawMetar = getRawMetar(metar);
+  WEATHER.receiptTime = getReceiptTime(metar);
+  WEATHER.windDirection = getMetarWindDirection(metar);
+  WEATHER.windSpeed = getMetarWindSpeed(metar);
+  WEATHER.windGust = getMetarWindGust(metar);
+  WEATHER.visibility = getMetarVisibility(metar);
+  WEATHER.clouds = normalizeClouds(metar);
+  WEATHER.tafHasGustsNextHour = tafHasGustsNextHour(taf);
+  WEATHER.convectiveSigmetActive = sigmetResult.active;
+  WEATHER.sigmetMatches = sigmetResult.matches;
+}
+
+function render() {
+  document.getElementById("todayLine").textContent = getFormattedHeaderDate();
+
+  const { statuses, windCalc, lowestCeiling } = applyFlightRules(WEATHER);
+
+  document.getElementById("airportCode").textContent = WEATHER.airport;
+  document.getElementById("bestRunway").textContent = windCalc.bestRunway;
+  document.getElementById("windSummary").textContent =
+    `${WEATHER.windDirection}° @ ${WEATHER.windSpeed}kt` +
+    (WEATHER.windGust > WEATHER.windSpeed ? ` G${WEATHER.windGust}` : "");
+  document.getElementById("visibility").textContent = `${WEATHER.visibility} SM`;
+  document.getElementById("ceiling").textContent = lowestCeiling ? `${lowestCeiling} ft` : "No BKN/OVC";
+  document.getElementById("crosswind").textContent = `${windCalc.crosswind} kt`;
+  document.getElementById("rawMetar").textContent = WEATHER.rawMetar;
+
+  const tafPill = document.getElementById("tafPill");
+  tafPill.textContent = WEATHER.tafHasGustsNextHour
+    ? `Gusts on ${WEATHER.tafAirport} TAF within next hour`
+    : `No gusts on ${WEATHER.tafAirport} TAF within next hour`;
+  tafPill.className = WEATHER.tafHasGustsNextHour
+    ? "pill-bad text-[10px] px-2 py-0.5 rounded-full"
+    : "pill-ok text-[10px] px-2 py-0.5 rounded-full";
+
+  const sigmetPill = document.getElementById("sigmetPill");
+  sigmetPill.textContent = WEATHER.convectiveSigmetActive
+    ? `SIGMET affecting ${WEATHER.airport}`
+    : `No SIGMET affecting ${WEATHER.airport}`;
+  sigmetPill.className = WEATHER.convectiveSigmetActive
+    ? "pill-bad text-[10px] px-2 py-0.5 rounded-full"
+    : "pill-ok text-[10px] px-2 py-0.5 rounded-full";
+
+  document.getElementById("updatedPill").textContent = `Updated ${formatLocalTime(WEATHER.receiptTime)}`;
+
+  renderTable(statuses);
+}
+
+function showError(err) {
+  console.error(err);
+  document.getElementById("rawMetar").textContent = `Error loading weather: ${err.message}`;
+  document.getElementById("updatedPill").textContent = "Updated —";
+}
+
+async function refreshAll() {
+  try {
+    await loadWeather();
+    render();
+  } catch (err) {
+    showError(err);
+  }
+}
+
+refreshAll();
+setInterval(refreshAll, CONFIG.refreshMs);
+setInterval(() => window.location.reload(), CONFIG.refreshMs);
+</script>
+</body>
+</html>
