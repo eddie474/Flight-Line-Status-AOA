@@ -539,13 +539,11 @@ function renderTable(statuses) {
     renderRow("SOLO", "PRACTICE AREA", statuses.solo.practiceArea),
     renderRow("SOLO", "CROSS COUNTRY", statuses.solo.crossCountry),
 
-    renderRow("RENTER", "TRAFFIC PATTERN", statuses.renter.trafficPattern),
-    renderRow("RENTER", "PRACTICE AREA", statuses.renter.practiceArea),
-    renderRow("RENTER", "CROSS COUNTRY", statuses.renter.crossCountry),
+    renderRow("RENTER / TIMEBUILDER", "TRAFFIC PATTERN", statuses.renter.trafficPattern),
+    renderRow("RENTER / TIMEBUILDER", "PRACTICE AREA", statuses.renter.practiceArea),
+    renderRow("RENTER / TIMEBUILDER", "CROSS COUNTRY", statuses.renter.crossCountry),
 
-    renderRow("TIME BUILD", "TRAFFIC PATTERN", statuses.timeBuild.trafficPattern),
-    renderRow("TIME BUILD", "PRACTICE AREA", statuses.timeBuild.practiceArea),
-    renderRow("TIME BUILD", "CROSS COUNTRY", statuses.timeBuild.crossCountry),
+
   ];
 
   document.getElementById("statusTable").innerHTML = rows.join("");
