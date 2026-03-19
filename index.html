@@ -8,18 +8,18 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-:root{
-  --panel: rgba(255,255,255,.82);
-  --panelBorder: rgba(37,99,235,.14);
-  --ok: rgba(34,197,94,.18);
-  --okBorder: rgba(34,197,94,.38);
-  --bad: rgba(239,68,68,.18);
-  --badBorder: rgba(239,68,68,.38);
-  --textMain: #0f172a;
-  --textSoft: rgba(15,23,42,.72);
-  --cardBg: rgba(255,255,255,.92);
-  --cardBorder: rgba(37,99,235,.12);
-}
+    :root{
+      --panel: rgba(255,255,255,.82);
+      --panelBorder: rgba(37,99,235,.14);
+      --ok: rgba(34,197,94,.18);
+      --okBorder: rgba(34,197,94,.38);
+      --bad: rgba(239,68,68,.18);
+      --badBorder: rgba(239,68,68,.38);
+      --textMain: #0f172a;
+      --textSoft: rgba(15,23,42,.72);
+      --cardBg: rgba(255,255,255,.92);
+      --cardBorder: rgba(37,99,235,.12);
+    }
 
     html, body {
       height: 100%;
@@ -39,23 +39,19 @@
       color: var(--textSoft);
     }
 
-.pill-ok {
-  border: 1px solid rgba(34,197,94,.32);
-  background: rgba(34,197,94,.14);
-  color: var(--textMain);
-}
+    .pill-ok {
+      border: 1px solid rgba(34,197,94,.32);
+      background: rgba(34,197,94,.14);
+      color: var(--textMain);
+    }
 
-.pill-bad {
-  border: 1px solid rgba(239,68,68,.32);
-  background: rgba(239,68,68,.14);
-  color: var(--textMain);
-}
+    .pill-bad {
+      border: 1px solid rgba(239,68,68,.32);
+      background: rgba(239,68,68,.14);
+      color: var(--textMain);
+    }
 
     .mono { font-variant-numeric: tabular-nums; }
-
-    .table-row + .table-row {
-      border-top: 1px solid rgba(37,99,235,.10);
-    }
 
     .compact-shell {
       height: 100vh;
@@ -91,12 +87,6 @@
       overflow: hidden;
     }
 
-    .table-row {
-      min-height: 32px;
-      align-items: center;
-      transition: background .2s ease, box-shadow .2s ease;
-    }
-
     .table-head {
       min-height: 34px;
       align-items: center;
@@ -122,18 +112,6 @@
       color: var(--textMain);
     }
 
-.row-open {
-  background: #22c55e;
-  color: white;
-  box-shadow: none;
-}
-
-.row-hold {
-  background: #ef4444;
-  color: white;
-  box-shadow: none;
-}
-
     .title-text {
       font-size: 28px;
       line-height: 1.1;
@@ -144,15 +122,100 @@
       margin-bottom: 8px;
     }
 
+    .status-wrap {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      height: 100%;
+      background: white;
+    }
+
+    .group {
+      display: grid;
+      grid-template-columns: 34% 33% 33%;
+    }
+
+.group + .group {
+
+}
+
+.profile-cell {
+  background: #ffffff;
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  padding: 12px;
+  border-right: 1px solid #DAE2F9;
+  border-bottom: 1px solid #DAE2F9;
+}
+    .group-4 .profile-cell {
+      min-height: 164px;
+    }
+
+    .group-3 .profile-cell {
+      min-height: 123px;
+    }
+
+    .group-rows {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: 50% 50%;
+      min-height: 41px;
+      align-items: center;
+      color: white;
+      font-weight: 800;
+    }
+
+    .status-row + .status-row {
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .row-open {
+      background: #22c55e;
+    }
+
+    .row-hold {
+      background: #ef4444;
+    }
+
+    .condition-cell,
+    .status-cell {
+      padding: 0 12px;
+      font-size: 14px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+
+    .condition-cell {
+      justify-content: flex-start;
+    }
+
+    .status-cell {
+      justify-content: flex-start;
+    }
+
     ::-webkit-scrollbar { height: 10px; width: 10px; }
     ::-webkit-scrollbar-thumb { background: rgba(37,99,235,.18); border-radius: 999px; }
     ::-webkit-scrollbar-track { background: rgba(255,255,255,.35); }
 
     @media (max-width: 1200px) {
       html, body { overflow: auto; }
+
       .weather-grid-compact {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
+
       .compact-shell {
         height: auto;
       }
@@ -232,22 +295,18 @@
           </div>
         </div>
 
-
-
         <div class="mt-2 rounded-xl px-3 py-2"
           style="background: var(--cardBg); border: 1px solid var(--cardBorder);">
           <div class="tight-label">METAR</div>
           <div id="rawMetar" class="mt-1 text-sm font-semibold break-words leading-snug text-slate-900">Loading...</div>
         </div>
 
-                <div class="mt-2 flex flex-wrap gap-1.5">
+        <div class="mt-2 flex flex-wrap gap-1.5">
           <span id="tafPill" class="pill text-xs px-2 py-0.5 rounded-full">TAF status</span>
           <span id="sigmetPill" class="pill text-xs px-2 py-0.5 rounded-full">SIGMET status</span>
           <span id="updatedPill" class="pill text-xs px-2 py-0.5 rounded-full mono">Updated —</span>
         </div>
-        
       </section>
-
 
       <section class="glass-card rounded-2xl p-2 sm:p-3 table-fit">
         <div class="table-fit-inner min-w-[760px]">
@@ -259,7 +318,7 @@
           </div>
 
           <div id="statusTable"
-               class="rounded-b-xl overflow-hidden"
+               class="status-wrap rounded-b-xl overflow-hidden"
                style="border: 1px solid rgba(37,99,235,.12); border-top: 0;">
           </div>
         </div>
@@ -509,38 +568,47 @@ function applyFlightRules(weather) {
   return { statuses, windCalc, lowestCeiling };
 }
 
-function renderRow(profile, condition, isOpen) {
-  const rowClass = isOpen ? "row-open" : "row-hold";
-  const statusText = isOpen ? "OPEN" : "HOLD";
-
+function renderStatusRow(condition, isOpen) {
   return `
-    <div class="table-row grid grid-cols-3 ${rowClass}">
-      <div class="px-3 py-2 text-sm font-extrabold">${profile}</div>
-      <div class="px-3 py-2 text-sm font-semibold">${condition}</div>
-      <div class="px-3 py-2 text-sm font-extrabold uppercase tracking-wide">${statusText}</div>
+    <div class="status-row ${isOpen ? "row-open" : "row-hold"}">
+      <div class="condition-cell">${condition}</div>
+      <div class="status-cell">${isOpen ? "OPEN" : "HOLD"}</div>
+    </div>
+  `;
+}
+
+function renderGroup(profile, rows, sizeClass) {
+  return `
+    <div class="group ${sizeClass}">
+      <div class="profile-cell">${profile}</div>
+      <div class="group-rows" style="grid-column: 2 / span 2;">
+        ${rows.join("")}
+      </div>
     </div>
   `;
 }
 
 function renderTable(statuses) {
-  const rows = [
-    renderRow("DUAL", "TRAFFIC PATTERN", statuses.dual.trafficPattern),
-    renderRow("DUAL", "PRACTICE AREA", statuses.dual.practiceArea),
-    renderRow("DUAL", "CROSS COUNTRY", statuses.dual.crossCountry),
-    renderRow("DUAL", "IFR", statuses.dual.ifr),
+  const dualGroup = renderGroup("DUAL", [
+    renderStatusRow("TRAFFIC PATTERN", statuses.dual.trafficPattern),
+    renderStatusRow("PRACTICE AREA", statuses.dual.practiceArea),
+    renderStatusRow("CROSS COUNTRY", statuses.dual.crossCountry),
+    renderStatusRow("IFR", statuses.dual.ifr)
+  ], "group-4");
 
-    renderRow("SOLO", "TRAFFIC PATTERN", statuses.solo.trafficPattern),
-    renderRow("SOLO", "PRACTICE AREA", statuses.solo.practiceArea),
-    renderRow("SOLO", "CROSS COUNTRY", statuses.solo.crossCountry),
+  const soloGroup = renderGroup("SOLO", [
+    renderStatusRow("TRAFFIC PATTERN", statuses.solo.trafficPattern),
+    renderStatusRow("PRACTICE AREA", statuses.solo.practiceArea),
+    renderStatusRow("CROSS COUNTRY", statuses.solo.crossCountry)
+  ], "group-3");
 
-    renderRow("RENTER / TIMEBUILDER", "TRAFFIC PATTERN", statuses.renter.trafficPattern),
-    renderRow("RENTER / TIMEBUILDER", "PRACTICE AREA", statuses.renter.practiceArea),
-    renderRow("RENTER / TIMEBUILDER", "CROSS COUNTRY", statuses.renter.crossCountry),
+  const renterGroup = renderGroup("RENTER / TIMEBUILDER", [
+    renderStatusRow("TRAFFIC PATTERN", statuses.renter.trafficPattern),
+    renderStatusRow("PRACTICE AREA", statuses.renter.practiceArea),
+    renderStatusRow("CROSS COUNTRY", statuses.renter.crossCountry)
+  ], "group-3");
 
-
-  ];
-
-  document.getElementById("statusTable").innerHTML = rows.join("");
+  document.getElementById("statusTable").innerHTML = dualGroup + soloGroup + renterGroup;
 }
 
 function pickFirstRecord(json) {
