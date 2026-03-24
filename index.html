@@ -117,7 +117,7 @@
       line-height: 1.1;
       font-weight: 900;
       letter-spacing: .02em;
-      color: #1d4ed8;
+      color: #40478C;
       text-align: center;
       margin-bottom: 8px;
     }
@@ -136,22 +136,22 @@
     }
 
 .group + .group {
-
+  border-top: 1px solid #DAE2F9;
 }
 
-.profile-cell {
-  background: #ffffff;
-  color: #1d4ed8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-size: 20px;
-  font-weight: 800;
-  padding: 12px;
-  border-right: 1px solid #DAE2F9;
-  border-bottom: 1px solid #DAE2F9;
-}
+    .profile-cell {
+      background: #ffffff;
+      color: #40478C;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+      padding: 12px;
+      border-right: 1px solid #DAE2F9;
+    }
+
     .group-4 .profile-cell {
       min-height: 164px;
     }
@@ -171,20 +171,13 @@
       grid-template-columns: 50% 50%;
       min-height: 41px;
       align-items: center;
-      color: white;
+      background: #ffffff;
+      color: var(--textMain);
       font-weight: 800;
     }
 
     .status-row + .status-row {
-      border-top: 1px solid rgba(255,255,255,.08);
-    }
-
-    .row-open {
-      background: #22c55e;
-    }
-
-    .row-hold {
-      background: #ef4444;
+      border-top: 1px solid #DAE2F9;
     }
 
     .condition-cell,
@@ -199,10 +192,22 @@
 
     .condition-cell {
       justify-content: flex-start;
+      background: #ffffff;
+      color: var(--textMain);
     }
 
     .status-cell {
       justify-content: flex-start;
+      color: #ffffff;
+      font-weight: 800;
+    }
+
+    .status-cell.open {
+      background: #22c55e;
+    }
+
+    .status-cell.hold {
+      background: #ef4444;
     }
 
     ::-webkit-scrollbar { height: 10px; width: 10px; }
@@ -266,7 +271,7 @@
         <div class="weather-grid-compact">
           <div class="rounded-xl tight-card" style="background: var(--cardBg); border: 1px solid var(--cardBorder);">
             <div class="tight-label">Airport</div>
-            <div id="airportCode" class="tight-value text-sim-blue">KORL</div>
+            <div id="airportCode" class="tight-value text">KORL</div>
           </div>
 
           <div class="rounded-xl tight-card" style="background: var(--cardBg); border: 1px solid var(--cardBorder);">
@@ -570,9 +575,9 @@ function applyFlightRules(weather) {
 
 function renderStatusRow(condition, isOpen) {
   return `
-    <div class="status-row ${isOpen ? "row-open" : "row-hold"}">
+    <div class="status-row">
       <div class="condition-cell">${condition}</div>
-      <div class="status-cell">${isOpen ? "OPEN" : "HOLD"}</div>
+      <div class="status-cell ${isOpen ? "open" : "hold"}">${isOpen ? "OPEN" : "HOLD"}</div>
     </div>
   `;
 }
@@ -666,26 +671,56 @@ function getReceiptTime(metar) {
 function tafHasGustsNextHour(taf) {
   if (!taf) return false;
 
-  const periods = [];
-  if (Array.isArray(taf.fcsts)) periods.push(...taf.fcsts);
-  if (Array.isArray(taf.forecast)) periods.push(...taf.forecast);
+  const now = new Date();
+  const currentHour = now.getUTCHours();
+  const currentDay = now.getUTCDate();
 
-  const now = Date.now();
-  const oneHourFromNow = now + 60 * 60 * 1000;
+  const periods = []
+    .concat(Array.isArray(taf.fcsts) ? taf.fcsts : [])
+    .concat(Array.isArray(taf.forecast) ? taf.forecast : []);
 
   for (const item of periods) {
-    const from = item.fcst_time_from || item.startTime || item.valid_from || item.from;
-    const to = item.fcst_time_to || item.endTime || item.valid_to || item.to;
-    const start = from ? new Date(from).getTime() : NaN;
-    const end = to ? new Date(to).getTime() : NaN;
-    const gust = safeNumber(item.wgst ?? item.wind_gust_kt ?? item.windGust, 0);
+    const startRaw =
+      item.fcst_time_from ||
+      item.startTime ||
+      item.valid_from ||
+      item.from ||
+      item.timeFrom ||
+      item.start_time;
 
-    if (Number.isFinite(start) && Number.isFinite(end) && end > now && start < oneHourFromNow && gust > 0) {
+    const endRaw =
+      item.fcst_time_to ||
+      item.endTime ||
+      item.valid_to ||
+      item.to ||
+      item.timeTo ||
+      item.end_time;
+
+    const start = startRaw ? new Date(startRaw).getTime() : NaN;
+    const end = endRaw ? new Date(endRaw).getTime() : NaN;
+
+    const gust =
+      Number(item.wgst) ||
+      Number(item.wind_gust_kt) ||
+      Number(item.wgust) ||
+      Number(item.gust) ||
+      0;
+
+    if (
+      Number.isFinite(start) &&
+      Number.isFinite(end) &&
+      end > now.getTime() &&
+      start < now.getTime() + 60 * 60 * 1000 &&
+      gust > 0
+    ) {
       return true;
     }
   }
 
-  return false;
+  const raw = taf.rawTAF || taf.raw_text || taf.raw || "";
+  if (!raw) return false;
+
+  return /(?:\s|^)\d{3}\d{2,3}G\d{2,3}KT(?:\s|$)/.test(raw);
 }
 
 function pointInRing(point, ring) {
