@@ -231,6 +231,97 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
+
+    /* ===== ANIMATIONS FROM OTHER PROJECT ===== */
+
+    .page-shell {
+      background:
+        linear-gradient(115deg, rgba(186,230,253,.26), transparent 38%),
+        linear-gradient(245deg, rgba(147,197,253,.22), transparent 42%),
+        #ffffff;
+    }
+
+    .sky-wash {
+      background:
+        radial-gradient(circle at 16% 20%, rgba(191,219,254,.34), transparent 30%),
+        radial-gradient(circle at 82% 18%, rgba(125,211,252,.26), transparent 32%),
+        radial-gradient(circle at 72% 88%, rgba(219,234,254,.36), transparent 34%);
+      animation: skyBreathe 5s ease-in-out infinite;
+    }
+
+    .flight-trail {
+      position: absolute;
+      left: -12%;
+      width: 64%;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(147,197,253,.10), rgba(96,165,250,.42), transparent);
+      transform: rotate(-12deg);
+      opacity: .7;
+      animation: trailSweep 7s linear infinite;
+    }
+
+    .flight-trail:nth-child(1) { top: 22%; animation-delay: -1s; }
+    .flight-trail:nth-child(2) { top: 38%; animation-delay: -4s; width: 48%; opacity: .48; }
+    .flight-trail:nth-child(3) { top: 64%; animation-delay: -2.5s; width: 58%; opacity: .38; }
+
+    .c172-flyby {
+      position: fixed;
+      right: 0;
+      bottom: clamp(10px, 2.5vh, 28px);
+      z-index: 20;
+      width: clamp(230px, 30vw, 460px);
+      pointer-events: none;
+      opacity: .9;
+      transform: translateX(0);
+      animation: c172Travel 8s linear infinite;
+    }
+
+    .c172-plane {
+      display: block;
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 12px 18px rgba(15,23,42,.22));
+      transform-origin: 50% 55%;
+      animation: c172Bob 2.8s ease-in-out infinite;
+    }
+
+    @keyframes skyBreathe {
+      0%, 100% {
+        opacity: .72;
+        transform: translate3d(-1%, -.6%, 0) scale(1.02);
+      }
+      50% {
+        opacity: 1;
+        transform: translate3d(1%, .8%, 0) scale(1.08);
+      }
+    }
+
+    @keyframes trailSweep {
+      from { transform: translateX(-35%) rotate(-12deg); }
+      to { transform: translateX(235%) rotate(-12deg); }
+    }
+
+    @keyframes c172Travel {
+      from { transform: translateX(120%); }
+      to { transform: translateX(calc(-100vw - 120%)); }
+    }
+
+    @keyframes c172Bob {
+      0%, 100% { transform: translateY(0) rotate(.4deg); }
+      25% { transform: translateY(-8px) rotate(1.8deg); }
+      50% { transform: translateY(0) rotate(.2deg); }
+      75% { transform: translateY(8px) rotate(-1.8deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
   </style>
 
   <script>
@@ -247,15 +338,30 @@
 
 <body class="font-sans bg-white text-slate-900">
   <div class="relative overflow-hidden bg-white text-slate-900 p-2 sm:p-3 compact-shell">
-    <div class="pointer-events-none absolute inset-0">
+    <!-- Animated background elements -->
+    <div class="sky-wash pointer-events-none absolute inset-0"></div>
+    <div class="pointer-events-none absolute inset-0 overflow-hidden">
+      <span class="flight-trail"></span>
+      <span class="flight-trail"></span>
+      <span class="flight-trail"></span>
       <div
         class="absolute -top-40 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] rounded-full blur-3xl opacity-30"
-        style="background: radial-gradient(circle, rgba(250,204,21,0.24), rgba(37,99,235,0.14), transparent 70%);">
+        style="background: radial-gradient(circle, rgba(186,230,253,0.28), rgba(37,99,235,0.12), transparent 70%);">
       </div>
       <div
         class="absolute -bottom-56 right-[-120px] w-[900px] h-[900px] rounded-full blur-3xl opacity-20"
         style="background: radial-gradient(circle, rgba(37,99,235,0.16), transparent 65%);">
       </div>
+    </div>
+
+    <!-- C172 airplane animation -->
+    <div class="c172-flyby" aria-hidden="true">
+      <img
+        src="c172-sprite.png"
+        alt=""
+        class="c172-plane"
+        onerror="this.parentElement.style.display='none'"
+      />
     </div>
 
     <main class="compact-main">
@@ -362,6 +468,13 @@ const WEATHER = {
   convectiveSigmetActive: false,
   sigmetMatches: []
 };
+
+// Page sequencing: this page should start after the plane crosses the first screen.
+// The plane travel duration is 8 seconds, so this page starts with that delay.
+const START_OFFSET_MS = 8000;
+const TOTAL_SCREENS = 2;
+const PLANE_SEQUENCE_MS = 8000;
+const SEQUENCE_DURATION_MS = TOTAL_SCREENS * PLANE_SEQUENCE_MS;
 
 const weekdays = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -918,6 +1031,80 @@ async function refreshAll() {
 refreshAll();
 setInterval(refreshAll, CONFIG.refreshMs);
 setInterval(() => window.location.reload(), CONFIG.refreshMs);
+
+/* =========================================
+   ANIMATION SYNCHRONIZATION SYSTEM
+   Syncs animations across multiple pages using
+   a shared time reference (based on elapsed ms
+   since midnight UTC to keep all pages aligned)
+   ========================================= */
+
+function initAnimationSync() {
+  // Get elapsed milliseconds since midnight UTC
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setUTCHours(0, 0, 0, 0);
+  const elapsedMs = now.getTime() - midnight.getTime();
+  const delayedMs = elapsedMs + START_OFFSET_MS;
+
+  // Shared background sync
+  const skyWash = document.querySelector('.sky-wash');
+  if (skyWash) {
+    const skyOffset = (delayedMs % 5000) / 5000 * -5; // 5s cycle
+    skyWash.style.animationDelay = `${skyOffset}s`;
+  }
+
+  const sequencePhase = delayedMs % SEQUENCE_DURATION_MS;
+  const screenStart = SCREEN_INDEX * PLANE_SEQUENCE_MS;
+  const screenEnd = screenStart + PLANE_SEQUENCE_MS;
+  const screenActive = sequencePhase >= screenStart && sequencePhase < screenEnd;
+  const localPlaneMs = screenActive ? sequencePhase - screenStart : 0;
+
+  const trails = document.querySelectorAll('.flight-trail');
+  trails.forEach((trail, idx) => {
+    const trailDuration = 7000; // 7s cycle
+    const offset = (elapsedMs % trailDuration) / trailDuration * -7;
+    trail.style.animationDelay = `${offset}s`;
+    trail.style.transition = 'opacity .3s ease';
+    trail.style.opacity = screenActive ? '' : '0';
+  });
+
+  // Sequential plane handoff between screens
+
+  const c172 = document.querySelector('.c172-flyby');
+  if (c172) {
+    c172.style.opacity = screenActive ? '1' : '0';
+    c172.style.pointerEvents = 'none';
+    c172.style.transition = 'opacity .3s ease';
+
+    if (screenActive) {
+      c172.style.animationDelay = `-${localPlaneMs / 1000}s`;
+    } else {
+      c172.style.animationDelay = '0s';
+    }
+
+    const planeImg = document.querySelector('.c172-plane');
+    if (planeImg) {
+      const bobDuration = 2800; // 2.8s cycle
+      const bobOffset = (elapsedMs % bobDuration) / bobDuration * -2.8;
+      planeImg.style.animationDelay = `${bobOffset}s`;
+    }
+  }
+
+  console.log(`Animation sync initialized at ${elapsedMs}ms from midnight UTC`);
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', initAnimationSync);
+// Also init immediately in case DOMContentLoaded already fired
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAnimationSync);
+} else {
+  initAnimationSync();
+}
+
+// Re-sync animations every 30 seconds to account for clock drift
+setInterval(initAnimationSync, 30000);
 </script>
 </body>
 </html>
